@@ -34,6 +34,7 @@ class MongodumpThread(Process):
         self.ssl_client_cert_file = self.config.ssl.client_cert_file
         self.read_pref_tags       = self.config.replication.read_pref_tags
         self.binary               = self.config.backup.mongodump.binary
+        self.oplog_enabled        = self.config.backup.mongodump.oplog.enabled
 
         self.timer_name        = "%s-%s" % (self.__class__.__name__, self.uri.replset)
         self.exit_code         = 1
@@ -134,6 +135,13 @@ class MongodumpThread(Process):
             logging.exception("Error reading mongodump output: %s" % e)
         finally:
             self._process.communicate()
+    
+    def check_oplog_enabled(self):
+        if isinstance(self.oplog_enabled, bool):
+            return self.oplog_enabled
+        elif isinstance(self.oplog_enabled, str) and self.oplog_enabled.strip().lower() != 'false':
+            return True
+        return False
 
     def mongodump_cmd(self):
         mongodump_uri   = self.uri.get()
@@ -141,10 +149,15 @@ class MongodumpThread(Process):
         mongodump_flags = [
             "--host=%s" % mongodump_uri.host,
             "--port=%s" % str(mongodump_uri.port),
-            "--oplog",
             "--out=%s/dump" % self.backup_dir
         ]
 
+        # --backup.mongodump.oplog.enabled
+        if self.check_oplog_enabled():
+            mongodump_flags.append("--oplog")
+        else:
+            logging.info("Mongodump oplog tailer is disabled, skipping")
+        
         # --numParallelCollections
         if self.threads > 0:
             mongodump_flags.append("--numParallelCollections=%s" % str(self.threads))

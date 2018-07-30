@@ -10,4 +10,6 @@ def config(parser):
     parser.add_argument("--backup.mongodump.threads", dest="backup.mongodump.threads",
                         help="Number of threads to use for each mongodump process. There is 1 x mongodump per shard, be careful! (default: shards/CPUs)",
                         default=0, type=int)
+    parser.add_argument("--backup.mongodump.oplog.enabled", dest="backup.mongodump.oplog.enabled", default='true', type=str,
+                        help="Enable/disable mongodump --oplog (default: true)")
     return parser
