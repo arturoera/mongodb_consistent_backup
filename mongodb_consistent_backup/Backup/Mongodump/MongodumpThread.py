@@ -156,7 +156,7 @@ class MongodumpThread(Process):
         if self.check_oplog_enabled():
             mongodump_flags.append("--oplog")
         else:
-            logging.info("Mongodump oplog tailer is disabled, skipping")
+            logging.info("Mongodump --oplog was disabled, skipping this option from mongodump")
         
         # --numParallelCollections
         if self.threads > 0:
@@ -235,8 +235,9 @@ class MongodumpThread(Process):
             logging.exception("Error performing mongodump: %s" % e)
 
         try:
-            oplog = Oplog(self.oplog_file, self.dump_gzip)
-            oplog.load()
+            if self.check_oplog_enabled():
+                oplog = Oplog(self.oplog_file, self.dump_gzip)
+                oplog.load()
         except Exception, e:
             logging.exception("Error loading oplog: %s" % e)
 
