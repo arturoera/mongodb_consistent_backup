@@ -1,13 +1,13 @@
 %define debug_package	%{nil}
 %define	bin_name	mongodb-consistent-backup
-%define log_dir		/var/log/mongodb-consistent-backup
+%define log_dir		/var/log/rocket
 %define data_dir	/var/lib/mongodb-consistent-backup
-%define run_user	mongodb_consistent_backup
-%define run_group	mongodb_consistent_backup
+%define run_user	root
+%define run_group	root
 
-Name:		mongodb_consistent_backup
+Name:		OR-mongodb_consistent_backup
 Version:	%{version}
-Release:	%{release}%{?dist}
+Release:	1%{?dist}
 Summary:	MongoDB Consistent Backup Tool
 
 Group:		Software/Database
@@ -17,12 +17,15 @@ Source0:	%{bin_name}
 Source1:	%{bin_name}.conf
 Source2:	LICENSE
 Source3:	README.rst
-Prefix:		/usr
+Prefix:		/opt/mongodb_consistent_backup-%{version}
 
 # Use CentOS SCL python27 (https://www.softwarecollections.org/en/scls/rhscl/python27/) on CentOS 6 (RHEL6 untested)
 # On build host: 'yum install python27-python python27-python-devel python27-python-virtualenv gcc make libffi-devel openssl-devel'
-%{?el6:Requires: python27-python openssl-libs}
-%{?el6:BuildRequires: python27-python python27-python-devel python27-python-virtualenv gcc make libffi-devel openssl-devel}
+# modifying Requirements for OR centos6
+#%{?el6:Requires: python27-python openssl-libs}
+%{?el6:Requires: OR-python openssl}
+#%{?el6:BuildRequires: python27-python python27-python-devel python27-python-virtualenv gcc make libffi-devel openssl-devel}
+%{?el6:BuildRequires: OR-python gcc make libffi-devel openssl-devel}
 
 # Use base python/virtualenv, which should be 2.7 on CentOS/RHEL 7
 # On build host: 'yum install python python-devel python-virtualenv gcc make libffi-devel openssl-devel'
@@ -35,21 +38,21 @@ Tool for getting consistent backups from MongoDB Clusters and ReplicaSet
 
 
 %install
-mkdir -p %{buildroot}%{_sysconfdir}/cron.d %{buildroot}%{prefix}/bin %{buildroot}/usr/share/%{name}
+mkdir -p %{buildroot}%{prefix}%{_sysconfdir}/cron.d %{buildroot}%{prefix}/bin %{buildroot}%{prefix}/usr/share/%{name}
 
 install -m 0755 %{SOURCE0} %{buildroot}%{prefix}/bin/%{bin_name}
-install -m 0644 %{SOURCE1} %{buildroot}/usr/share/%{name}/%{bin_name}.example.conf
-install -m 0644 %{SOURCE1} %{buildroot}%{_sysconfdir}/%{bin_name}.conf
-install -m 0644 %{SOURCE2} %{buildroot}/usr/share/%{name}/LICENSE
-install -m 0644 %{SOURCE3} %{buildroot}/usr/share/%{name}/README.rst
+install -m 0644 %{SOURCE1} %{buildroot}%{prefix}/usr/share/%{name}/%{bin_name}.example.conf
+install -m 0644 %{SOURCE1} %{buildroot}%{prefix}%{_sysconfdir}/%{bin_name}.conf
+install -m 0644 %{SOURCE2} %{buildroot}%{prefix}/usr/share/%{name}/LICENSE
+install -m 0644 %{SOURCE3} %{buildroot}%{prefix}/usr/share/%{name}/README.rst
 
 
 # Generate cron.d file:
-%{__cat} <<EOF >%{buildroot}%{_sysconfdir}/cron.d/%{bin_name}
+#%{__cat} <<EOF >%{buildroot}%{_sysconfdir}/cron.d/%{bin_name}
 ### Uncomment and adjust time to enable backups (default time below is 00:00 every day):
 #
 #0 0 * * *	%{run_user}	%{prefix}/bin/mongodb-consistent-backup --config=%{_sysconfdir}/%{bin_name}.conf >/dev/null 2>&1
-EOF
+#EOF
 
 
 %pre
@@ -64,12 +67,12 @@ chown %{run_user}:%{run_group} %{data_dir} %{log_dir}
 
 
 %files
-%config(noreplace) %{_sysconfdir}/%{bin_name}.conf
-%config(noreplace) %{_sysconfdir}/cron.d/%{bin_name}
+%config(noreplace) %{prefix}%{_sysconfdir}/%{bin_name}.conf
+#%config(noreplace) %{prefix}%{_sysconfdir}/cron.d/%{bin_name}
 %{prefix}/bin/%{bin_name}
-%{prefix}/share/%{name}/%{bin_name}.example.conf
-%{prefix}/share/%{name}/LICENSE
-%{prefix}/share/%{name}/README.rst
+%{prefix}/usr/share/%{name}/%{bin_name}.example.conf
+%{prefix}/usr/share/%{name}/LICENSE
+%{prefix}/usr/share/%{name}/README.rst
 
 
 %changelog
