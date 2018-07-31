@@ -243,12 +243,15 @@ class MongodumpThread(Process):
 
         self.state.set('running', False)
         self.state.set('completed', True)
-        self.state.set('count', oplog.count())
-        self.state.set('first_ts', oplog.first_ts())
-        self.state.set('last_ts', oplog.last_ts())
-        self.timer.stop(self.timer_name)
+        if self.check_oplog_enabled():
+            self.state.set('count', oplog.count())
+            self.state.set('first_ts', oplog.first_ts())
+            self.state.set('last_ts', oplog.last_ts())
+            log_msg_extra = "%i oplog changes" % oplog.count()
+            if oplog.last_ts():
+                log_msg_extra = "%s, end ts: %s" % (log_msg_extra, oplog.last_ts())
+        else:
+            log_msg_extra = "with mongodump oplog tailing option disabled"
 
-        log_msg_extra = "%i oplog changes" % oplog.count()
-        if oplog.last_ts():
-            log_msg_extra = "%s, end ts: %s" % (log_msg_extra, oplog.last_ts())
+        self.timer.stop(self.timer_name)
         logging.info("Backup %s completed in %.2f seconds, %s" % (self.uri, self.timer.duration(self.timer_name), log_msg_extra))
